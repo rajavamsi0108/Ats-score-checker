@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Score Checker</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles & Animations */
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Circular Progress Bar */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 1s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Input Highlight */
+        .custom-focus:focus-within {
+            ring: 2px solid #3b82f6;
+            border-color: transparent;
+        }
+
+        /* Animation for results */
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+
+        /* Custom Scrollbar */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark textarea::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 w-full glass-panel shadow-sm transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-read-cv-logo text-3xl text-primary-600"></i>
+                    <span class="font-bold text-xl tracking-tight">ATS Checker<span class="text-primary-600">.io</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none" aria-label="Toggle Dark Mode">
+                        <i class="ph-bold ph-moon text-xl dark:hidden"></i>
+                        <i class="ph-bold ph-sun text-xl hidden dark:block text-yellow-400"></i>
+                    </button>
+                    <a href="#analyzer" class="hidden sm:inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-all shadow-md hover:shadow-lg">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative overflow-hidden pt-16 pb-12 lg:pt-24 lg:pb-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <span class="inline-block py-1 px-3 rounded-full bg-primary-100 text-primary-700 text-sm font-semibold mb-6 dark:bg-primary-900 dark:text-primary-300">
+                🚀 Boost Your Interview Chances
+            </span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6">
+                Check Your Resume <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">ATS Score</span> in Seconds
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-600 dark:text-slate-300">
+                Stop guessing. Our smart simulator analyzes your resume against job descriptions to give you actionable feedback on keywords, formatting, and skills.
+            </p>
+            <div class="mt-10 flex justify-center gap-4">
+                <a href="#analyzer" class="px-8 py-3.5 rounded-lg bg-primary-600 text-white font-semibold text-lg shadow-lg hover:bg-primary-700 hover:-translate-y-1 transition-all">
+                    Check My Score
+                </a>
+                <button onclick="document.getElementById('demo-content').click()" class="px-8 py-3.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                    Load Demo Data
+                </button>
+                <button id="demo-content" class="hidden"></button> <!-- Trigger for demo js -->
+            </div>
+        </div>
+        
+        <!-- Decorative blobs -->
+        <div class="absolute top-0 left-1/4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-0 right-1/4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+    </header>
+
+    <!-- Main Tool Section -->
+    <main id="analyzer" class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- INPUT COLUMN -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Resume Input Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <i class="ph-duotone ph-file-text text-primary-500 text-2xl"></i> 
+                        Resume Content
+                    </h2>
+                    <label class="cursor-pointer text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium flex items-center gap-1">
+                        <i class="ph-bold ph-upload-simple"></i> Upload PDF/Doc
+                        <input type="file" class="hidden" onchange="handleFileUpload(this)">
+                    </label>
+                </div>
+                <div class="relative group">
+                    <textarea id="resume-text" class="w-full h-64 p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none transition-all text-sm leading-relaxed font-mono" placeholder="Paste your resume text here..."></textarea>
+                    <div class="absolute bottom-3 right-3 text-xs text-slate-400" id="resume-word-count">0 words</div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button onclick="analyzeResume()" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                    <i class="ph-bold ph-lightning"></i> Analyze Resume
+                </button>
+                <button onclick="resetForm()" class="px-6 py-3 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition-colors text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS COLUMN -->
+        <div class="lg:col-span-7 space-y-6 hidden" id="results-container">
+            
+            <!-- Score Overview -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 fade-in-up">
+                <div class="flex flex-col md:flex-row items-center gap-8">
+                    
+                    <!-- Circular Progress -->
+                    <div class="relative w-40 h-40 flex-shrink-0">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <!-- Background circle -->
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="8" class="dark:stroke-slate-700" />
+                            <!-- Progress circle -->
+                            <circle id="score-ring" cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" class="progress-ring__circle" />
+                        </svg>
+                        <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                            <span id="score-number" class="text-4xl font-bold text-slate-800 dark:text-white">0</span>
+                            <span class="text-xs font-medium text-slate-500 uppercase">Score</span>
+                        </div>
+                    </div>
+
+                    <!-- Text Verdict -->
+                    <div class="text-center md:text-left flex-grow">
+                        <h3 class="text-2xl font-bold mb-2" id="verdict-title">Ready to Scan</h3>
+                        <p class="text-slate-600 dark:text-slate-400 mb-4" id="verdict-text">
+                            Click analyze to see how well your resume matches general ATS standards.
+                        </p>
+                        <div class="flex flex-wrap justify-center md:justify-start gap-2">
+                            <span id="badge-level" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">NOT ANALYZED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Keywords -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow border border-slate-200 dark:border-slate-700 p-5 fade-in-up delay-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <i class="ph-duotone ph-target text-blue-500"></i> Standard Keywords
+                        </h4>
+                        <span id="keyword-score" class="font-mono font-bold text-blue-600">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+                        <div id="keyword-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <div id="missing-keywords" class="text-sm text-slate-500 dark:text-slate-400">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Formatting -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow border border-slate-200 dark:border-slate-700 p-5 fade-in-up delay-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            <i class="ph-duotone ph-paint-brush-broad text-purple-500"></i> Formatting
+                        </h4>
+                        <span id="format-score" class="font-mono font-bold text-purple-600">0/10</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+                        <div id="format-bar" class="bg-purple-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <ul id="format-issues" class="text-sm text-slate-500 dark:text-slate-400 space-y-1">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Suggestions Panel -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow border border-slate-200 dark:border-slate-700 p-6 fade-in-up delay-200">
+                <h4 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <i class="ph-duotone ph-lightbulb text-yellow-500 text-xl"></i> Improvement Suggestions
+                </h4>
+                <div id="suggestions-list" class="space-y-3">
+                    <!-- Suggestion items will be injected here -->
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <p class="text-center text-xs text-slate-400 mt-8 pb-4">
+                Disclaimer: This tool provides a simulated score based on common ATS heuristics. It is an educational tool and does not guarantee specific results with real Applicant Tracking Systems.
+            </p>
+        </div>
+        
+        <!-- Empty State Placeholder -->
+        <div class="lg:col-span-7 flex flex-col items-center justify-center text-center p-12 text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl" id="empty-state">
+            <i class="ph-duotone ph-scan text-6xl mb-4 text-slate-300 dark:text-slate-600"></i>
+            <h3 class="text-xl font-semibold mb-2 text-slate-500 dark:text-slate-400">Waiting for Data</h3>
+            <p class="max-w-md mx-auto">Upload or paste your resume to generate a comprehensive analysis.</p>
+        </div>
+
+    </main>
+
+    <script>
+        // --- DOM Elements ---
+        const resumeInput = document.getElementById('resume-text');
+        const resultsContainer = document.getElementById('results-container');
+        const emptyState = document.getElementById('empty-state');
+        const wordCountDisplay = document.getElementById('resume-word-count');
+
+        // --- Event Listeners ---
+        resumeInput.addEventListener('input', updateWordCount);
+        document.getElementById('demo-content').addEventListener('click', loadDemoData);
+
+        // --- Theme Toggle Logic ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+
+        // Check local storage or system preference
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+        } else {
+            htmlElement.classList.remove('dark');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+        });
+
+        // --- Core Functions ---
+
+        function updateWordCount() {
+            const text = resumeInput.value.trim();
+            const count = text ? text.split(/\s+/).length : 0;
+            wordCountDisplay.textContent = `${count} words`;
+            return count;
+        }
+
+        async function handleFileUpload(input) {
+            // Updated to use the Python backend /upload-pdf endpoint
+            if (input.files && input.files[0]) {
+                const formData = new FormData();
+                formData.append('file', input.files[0]);
+
+                resumeInput.value = "Uploading and parsing PDF...";
+                
+                try {
+                    const response = await fetch('/upload-pdf', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Upload failed');
+                    }
+
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    resumeInput.value = data.text;
+                    updateWordCount();
+                } catch (error) {
+                    console.error("Error uploading file:", error);
+                    alert("Error processing file. Please ensure the Flask backend is running and the file is valid.");
+                    resumeInput.value = ""; // Clear on error
+                }
+            }
+        }
+
+        function loadDemoData() {
+            const demoResume = `SENIOR FRONTEND DEVELOPER
+John Doe | john.doe@email.com | (555) 123-4567
+
+SUMMARY
+Experienced Frontend Developer with 5+ years of experience in building responsive web applications using React, JavaScript, and CSS. Proven track record of improving site performance by 40%.
+
+SKILLS
+- JavaScript (ES6+), HTML5, CSS3, React, Redux, Tailwind CSS
+- Git, Webpack, Agile/Scrum
+- UI/UX Principles, Accessibility (WCAG)
+- Project Management, Team Leadership, Problem Solving
+
+PROFESSIONAL EXPERIENCE
+Senior Web Developer | Tech Solutions Inc. | 2020 - Present
+- Spearheaded the migration of legacy code to React, reducing load times by 40%.
+- Led a team of 4 junior developers, conducting code reviews and mentoring.
+- Collaborated with UX designers to implement pixel-perfect designs.
+- Engineered reusable component libraries used across 5 different products.
+
+Junior Developer | Creative Agency | 2017 - 2020
+- Developed landing pages for high-profile clients.
+- Optimized images and scripts for maximum performance.
+- Managed version control using Git.
+
+EDUCATION
+Bachelor of Science in Computer Science | State University | 2017`;
+
+            resumeInput.value = demoResume;
+            updateWordCount();
+            
+            // Scroll to top of analyzer
+            document.getElementById('analyzer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            resumeInput.value = '';
+            updateWordCount();
+            resultsContainer.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+        }
+
+        async function analyzeResume() {
+            const resumeText = resumeInput.value.trim();
+
+            if (!resumeText) {
+                alert("Please enter resume content to analyze.");
+                return;
+            }
+
+            // Updated to use the Python backend /analyze endpoint
+            try {
+                // Show a loading state if desired (or just wait)
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ resume_text: resumeText })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis request failed');
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Show results
+                emptyState.classList.add('hidden');
+                resultsContainer.classList.remove('hidden');
+
+                // Pass backend data to UI updater
+                updateUI(
+                    data.total_score,
+                    data.keyword_score,
+                    data.format_score,
+                    data.missing_keywords,
+                    data.format_issues
+                );
+
+            } catch (error) {
+                console.error("Error analyzing resume:", error);
+                alert("Error analyzing resume. Please ensure the Flask backend is running.");
+            }
+        }
+
+        function updateUI(totalScore, kwScore, fmtScore, missingKw, fmtIssues) {
+            // 1. Circle Animation
+            const circle = document.getElementById('score-ring');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (totalScore / 100) * circumference;
+            
+            circle.style.strokeDashoffset = offset;
+            
+            // Color coding
+            let color = '#ef4444'; // Red
+            let verdict = "Needs Improvement";
+            let verdictMsg = "Your resume may be rejected by most ATS bots due to formatting or missing standard sections.";
+            let badgeClass = "bg-red-100 text-red-700";
+
+            if (totalScore > 40) {
+                color = '#f59e0b'; // Yellow
+                verdict = "Average Quality";
+                verdictMsg = "Your resume has potential but needs optimization in standard keywords and structure.";
+                badgeClass = "bg-yellow-100 text-yellow-700";
+            }
+            if (totalScore > 70) {
+                color = '#10b981'; // Green
+                verdict = "Excellent Quality";
+                verdictMsg = "Great job! Your resume is highly optimized with standard professional keywords.";
+                badgeClass = "bg-green-100 text-green-700";
+            }
+
+            circle.style.stroke = color;
+            document.getElementById('score-number').textContent = totalScore;
+            document.getElementById('score-number').style.color = color;
+            document.getElementById('verdict-title').textContent = verdict;
+            document.getElementById('verdict-text').textContent = verdictMsg;
+            
+            const badge = document.getElementById('badge-level');
+            badge.textContent = totalScore < 40 ? "LOW SCORE" : totalScore < 75 ? "MEDIUM SCORE" : "HIGH SCORE";
+            badge.className = `px-3 py-1 rounded-full text-xs font-bold ${badgeClass}`;
+
+            // 2. Keyword Bar
+            document.getElementById('keyword-score').textContent = `${kwScore}%`;
+            document.getElementById('keyword-bar').style.width = `${kwScore}%`;
+            
+            const missingDiv = document.getElementById('missing-keywords');
+            missingDiv.innerHTML = missingKw.length > 0 
+                ? `<strong>Consider adding:</strong> ${missingKw.slice(0, 5).join(', ')}`
+                : `<span class="text-green-600"><i class="ph-bold ph-check"></i> Great standard keyword coverage!</span>`;
+
+            // 3. Format Bar
+            document.getElementById('format-score').textContent = `${fmtScore}/10`;
+            document.getElementById('format-bar').style.width = `${fmtScore * 10}%`;
+            
+            const issuesList = document.getElementById('format-issues');
+            issuesList.innerHTML = '';
+            if (fmtIssues.length === 0) {
+                 const li = document.createElement('li');
+                 li.innerHTML = `<span class="text-green-600 flex items-center gap-1"><i class="ph-bold ph-check"></i> Formatting looks good!</span>`;
+                 issuesList.appendChild(li);
+            } else {
+                fmtIssues.forEach(issue => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="text-red-500 flex items-center gap-1"><i class="ph-bold ph-warning"></i> ${issue}</span>`;
+                    issuesList.appendChild(li);
+                });
+            }
+
+            // 4. Suggestions
+            const suggestionContainer = document.getElementById('suggestions-list');
+            suggestionContainer.innerHTML = '';
+            
+            const suggestions = [];
+            if (totalScore < 100) {
+                if (missingKw.length > 0) suggestions.push({icon: 'ph-text-t', text: `Add professional keywords like "<strong>${missingKw[0]}</strong>" to demonstrate soft skills.`});
+                if (fmtScore < 10 || fmtIssues.length > 0) suggestions.push({icon: 'ph-layout', text: "Fix formatting issues listed above to ensure the ATS can parse your contact info and sections."});
+                suggestions.push({icon: 'ph-pencil-simple', text: "Use more action verbs (e.g., Led, Developed) to start your bullet points."});
+                suggestions.push({icon: 'ph-file-pdf', text: "Ensure you are using a standard font (Arial, Calibri) and avoid complex tables."});
+            } else {
+                suggestions.push({icon: 'ph-star', text: "Your resume looks fantastic! Consider a final proofread for spelling."});
+            }
+
+            suggestions.forEach(s => {
+                const div = document.createElement('div');
+                div.className = "flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg";
+                div.innerHTML = `
+                    <div class="mt-1 p-1 bg-white dark:bg-slate-600 rounded text-primary-500 shadow-sm"><i class="ph-bold ${s.icon}"></i></div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">${s.text}</p>
+                `;
+                suggestionContainer.appendChild(div);
+            });
+        }
+
+    </script>
+</body>
+</html>
